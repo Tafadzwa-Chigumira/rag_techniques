@@ -1,6 +1,6 @@
 import getpass
 import os
-import sys
+from IPython.core.display import Image
 from langgraph.graph import END, StateGraph, START
 from langgraph.prebuilt import ToolNode, tools_condition
 from dotenv import load_dotenv
@@ -19,7 +19,8 @@ from langchain_core.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 from langgraph.prebuilt import tools_condition
-from IPython.display import Image, display
+import pprint
+
 
 load_dotenv()
 
@@ -213,8 +214,24 @@ graph = workflow.compile()
 
 
 
+inputs = {
+    "messages": [
+        ("user", "What does Lilian Weng say about the types of agent memory?"),
+    ]
+}
+for output in graph.stream(inputs):
+    for key, value in output.items():
+        pprint.pprint(f"Output from node '{key}':")
+        pprint.pprint("---")
+        pprint.pprint(value, indent=2, width=80, depth=None)
+    pprint.pprint("\n---\n")
+
+
 try:
-    display(Image(graph.get_graph(xray=True).draw_mermaid_png()))
-except Exception:
-    # This requires some extra dependencies and is optional
-    pass
+    dot_source = graph.get_graph(xray=True).draw_mermaid_png()
+    with open("workflow_graph.png", "wb") as f:
+        f.write(dot_source)
+
+    Image("workflow_graph.png")
+except Exception as e:
+    print(f"{e}")
